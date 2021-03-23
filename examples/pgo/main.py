@@ -66,7 +66,7 @@ def write_g2o(pose_graph, fn):
 
 def reshaping_fn(dE, b=1.5):
     """ Reshaping function from "Intrinsic consensus on SO(3), Tron et al."""
-    ang = dE.log.norm(dim=-1)
+    ang = dE.log().norm(dim=-1)
     err = 1/b - (1/b + ang) * torch.exp(-b*ang)
     return err.sum()
 
