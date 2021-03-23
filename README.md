@@ -7,8 +7,18 @@ The LieTorch library generalizes PyTorch to 3D transformation groups. Just as `t
 
 <center><img src="lietorch.png" width="480" style="center"></center>
 
-Tangent Space Backpropogation for 3D Transformation Groups  
+[Tangent Space Backpropogation for 3D Transformation Groups](https://arxiv.org/pdf/2103.12032.pdf)  
 Zachary Teed and Jia Deng, CVPR 2021
+
+```
+@inproceedings{teed2021tangent,
+  title={Tangent Space Backpropogation for 3D Transformation Groups},
+  author={Teed, Zachary and Deng, Jia},
+  booktitle={Conference on Computer Vision and Pattern Recognition},
+  year={2021},
+}
+```
+
 
 ## Installation
 
