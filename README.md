@@ -1,18 +1,18 @@
-# LieTorch: Tangent Space Backpropogation
+# LieTorch: Tangent Space Backpropagation
 
 
 ## Introduction
 
-The LieTorch library generalizes PyTorch to 3D transformation groups. Just as `torch.Tensor` is a multi-dimensional matrix of scalar elements, `lietorch.SE3` is a multi-dimensional matrix of SE3 elements. We support common tensor manipulations such as indexing, reshaping, and broadcasting. Group operations can be composed into computation graphs and backpropogation is automatically peformed in the tangent space of each element. For more details, please see our paper:
+The LieTorch library generalizes PyTorch to 3D transformation groups. Just as `torch.Tensor` is a multi-dimensional matrix of scalar elements, `lietorch.SE3` is a multi-dimensional matrix of SE3 elements. We support common tensor manipulations such as indexing, reshaping, and broadcasting. Group operations can be composed into computation graphs and backpropagation is automatically peformed in the tangent space of each element. For more details, please see our paper:
 
 <center><img src="lietorch.png" width="480" style="center"></center>
 
-[Tangent Space Backpropogation for 3D Transformation Groups](https://arxiv.org/pdf/2103.12032.pdf)  
+[Tangent Space Backpropagation for 3D Transformation Groups](https://arxiv.org/pdf/2103.12032.pdf)  
 Zachary Teed and Jia Deng, CVPR 2021
 
 ```
 @inproceedings{teed2021tangent,
-  title={Tangent Space Backpropogation for 3D Transformation Groups},
+  title={Tangent Space Backpropagation for 3D Transformation Groups},
   author={Teed, Zachary and Deng, Jia},
   booktitle={Conference on Computer Vision and Pattern Recognition},
   year={2021},
