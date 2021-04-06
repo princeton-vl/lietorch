@@ -14,7 +14,7 @@ Zachary Teed and Jia Deng, CVPR 2021
 @inproceedings{teed2021tangent,
   title={Tangent Space Backpropagation for 3D Transformation Groups},
   author={Teed, Zachary and Deng, Jia},
-  booktitle={Conference on Computer Vision and Pattern Recognition},
+  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
   year={2021},
 }
 ```
