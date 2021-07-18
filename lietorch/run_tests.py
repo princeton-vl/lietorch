@@ -147,6 +147,21 @@ def test_act_grad(Group, device='cuda'):
     print("\t-", Group, "Passed act-grad test")
 
 
+def test_matrix_grad(Group, device='cuda'):
+    D = Group.manifold_dim
+    X = Group.exp(5*torch.randn(1, 2, 3, D, device=device).double())
+    
+    def fn(a):
+        return (Group.exp(a) * X).matrix()
+
+    a = torch.zeros(1, 2, 3, D, requires_grad=True, device=device).double()
+    analytical, numerical = gradcheck(fn, [a], eps=1e-4)
+
+    assert torch.allclose(analytical[0], numerical[0], atol=1e-8)
+
+    print("\t-", Group, "Passed matrix-grad test")
+
+
 def scale(device='cuda'):
     
     def fn(a, s):
@@ -210,6 +225,7 @@ if __name__ == '__main__':
         test_adj_grad(Group, device='cpu')
         test_adjT_grad(Group, device='cpu')
         test_act_grad(Group, device='cpu')
+        test_matrix_grad(Group, device='cpu')
 
 
     print("Testing lietorch forward pass (GPU) ...")
@@ -231,5 +247,6 @@ if __name__ == '__main__':
         test_adj_grad(Group, device='cuda')
         test_adjT_grad(Group, device='cuda')
         test_act_grad(Group, device='cuda')
+        test_matrix_grad(Group, device='cuda')
 
 

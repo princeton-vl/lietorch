@@ -166,11 +166,17 @@ class LieGroup:
         elif p.shape[-1] == 4:
             return self.apply_op(Act4, self.data, p)
 
+    # def matrix(self):
+    #     """ convert element to 4x4 matrix """
+    #     input_shape = self.data.shape
+    #     mat = ToMatrix.apply(self.group_id, self.data.reshape(-1, self.embedded_dim))
+    #     return mat.view(input_shape[:-1] + (4,4))
+
     def matrix(self):
         """ convert element to 4x4 matrix """
-        input_shape = self.data.shape
-        mat = ToMatrix.apply(self.group_id, self.data.reshape(-1, self.embedded_dim))
-        return mat.view(input_shape[:-1] + (4,4))
+        I = torch.eye(4, dtype=self.dtype, device=self.device)
+        I = I.view([1] * (len(self.data.shape) - 1) + [4, 4])
+        return self.__class__(self.data[...,None,:]).act(I).transpose(-1,-2)
 
     def detach(self):
         return self.__class__(self.data.detach())
