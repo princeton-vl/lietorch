@@ -34,7 +34,12 @@ std::vector<torch::Tensor> act_backward_gpu(int, torch::Tensor, torch::Tensor, t
 torch::Tensor act4_forward_gpu(int, torch::Tensor, torch::Tensor);
 std::vector<torch::Tensor> act4_backward_gpu(int, torch::Tensor, torch::Tensor, torch::Tensor);
 
+// conversion operations
+// std::vector<torch::Tensor> to_vec_backward_gpu(int, torch::Tensor, torch::Tensor);
+// std::vector<torch::Tensor> from_vec_backward_gpu(int, torch::Tensor, torch::Tensor);
+
 // utility operators
+torch::Tensor orthogonal_projector_gpu(int, torch::Tensor);
 
 torch::Tensor as_matrix_forward_gpu(int, torch::Tensor);
 

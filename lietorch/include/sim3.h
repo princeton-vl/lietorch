@@ -76,6 +76,16 @@ class Sim3 {
       return T;
     }
 
+    EIGEN_DEVICE_FUNC Eigen::Matrix<Scalar,8,8> orthogonal_projector() const {
+      // jacobian action on a point
+      Eigen::Matrix<Scalar,8,8> J = Eigen::Matrix<Scalar,8,8>::Zero();
+      J.template block<3,3>(0,0) = Matrix3::Identity();
+      J.template block<3,3>(0,3) = SO3<Scalar>::hat(-translation);
+      J.template block<3,1>(0,6) = translation;
+      J.template block<5,5>(3,3) = rxso3.orthogonal_projector();
+      return J;
+    }
+
     EIGEN_DEVICE_FUNC Adjoint Adj() const {
       Adjoint Ad = Adjoint::Identity();
       Matrix3 sR = rxso3.Matrix();

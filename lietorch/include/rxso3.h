@@ -84,6 +84,23 @@ class RxSO3 {
       return T;
     }
 
+    EIGEN_DEVICE_FUNC Eigen::Matrix<Scalar,5,5> orthogonal_projector() const {
+      // jacobian action on a point
+      Eigen::Matrix<Scalar,5,5> J = Eigen::Matrix<Scalar,5,5>::Zero();
+      
+      J.template block<3,3>(0,0) = 0.5 * (
+        unit_quaternion.w() * Matrix3::Identity() + 
+        SO3<Scalar>::hat(-unit_quaternion.vec())
+      );
+      
+      J.template block<1,3>(3,0) = 0.5 * (-unit_quaternion.vec());
+
+      // scale
+      J(4,3) = scale;
+
+      return J;
+    }
+
     EIGEN_DEVICE_FUNC Transformation Rotation() const {
       return unit_quaternion.toRotationMatrix();
     }

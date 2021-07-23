@@ -5,11 +5,10 @@ import os.path as osp
 
 
 ROOT = osp.dirname(osp.abspath(__file__))
-print(ROOT)
 
 setup(
     name='lietorch',
-    version='0.1',
+    version='0.2',
     description='Lie Groups for PyTorch',
     author='teedrz',
     packages=['lietorch'],

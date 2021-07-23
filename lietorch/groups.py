@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 # group operations implemented in cuda
-from .group_ops import Exp, Log, Inv, Mul, Adj, AdjT, Jinv, Act3, Act4, ToMatrix, ExtractTranslation
+from .group_ops import Exp, Log, Inv, Mul, Adj, AdjT, Jinv, Act3, Act4, ToMatrix, ToVec, FromVec
 from .broadcasting import broadcast_inputs
 
 
@@ -70,6 +70,9 @@ class LieGroup:
     def dtype(self):
         return self.data.dtype
 
+    def vec(self):
+        return self.apply_op(ToVec, self.data)
+
     @property
     def tangent_shape(self):
         return self.data.shape[:-1] + (self.manifold_dim,)
@@ -101,6 +104,10 @@ class LieGroup:
         return cls.Identity(G.shape, device=G.data.device, dtype=G.data.dtype)
 
     @classmethod
+    def InitFromVec(cls, data):
+        return cls(cls.apply_op(FromVec, data))
+
+    @classmethod
     def Random(cls, *batch_shape, sigma=1.0, **kwargs):
         """ Construct random element with batch_shape by random sampling in tangent space"""
 
@@ -126,6 +133,10 @@ class LieGroup:
     def exp(cls, x):
         """ exponential map: x -> X """
         return cls(cls.apply_op(Exp, x))
+
+    def quaternion(self):
+        """ extract quaternion """
+        return self.apply_op(Quat, self.data)
 
     def log(self):
         """ logarithm map """
@@ -166,17 +177,17 @@ class LieGroup:
         elif p.shape[-1] == 4:
             return self.apply_op(Act4, self.data, p)
 
-    # def matrix(self):
-    #     """ convert element to 4x4 matrix """
-    #     input_shape = self.data.shape
-    #     mat = ToMatrix.apply(self.group_id, self.data.reshape(-1, self.embedded_dim))
-    #     return mat.view(input_shape[:-1] + (4,4))
-
     def matrix(self):
         """ convert element to 4x4 matrix """
         I = torch.eye(4, dtype=self.dtype, device=self.device)
         I = I.view([1] * (len(self.data.shape) - 1) + [4, 4])
         return self.__class__(self.data[...,None,:]).act(I).transpose(-1,-2)
+
+    def translation(self):
+        """ extract translation component """
+        p = torch.as_tensor([0.0, 0.0, 0.0, 1.0], dtype=self.dtype, device=self.device)
+        p = p.view([1] * (len(self.data.shape) - 1) + [4,])
+        return self.apply_op(Act4, self.data, p)
 
     def detach(self):
         return self.__class__(self.data.detach())
@@ -271,9 +282,6 @@ class SE3(LieGroup):
         t, q = self.data.split([3,4], -1)
         t = t * s.unsqueeze(-1)
         return SE3(torch.cat([t, q], dim=-1))
-
-    def translation(self):
-        return ExtractTranslation.apply(self.data)
 
 
 class Sim3(LieGroup):

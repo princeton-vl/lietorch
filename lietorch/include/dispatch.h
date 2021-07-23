@@ -40,6 +40,7 @@
     switch (_st) {                                                                   \
       PRIVATE_CASE_TYPE(GROUP_INDEX, at::ScalarType::Double, double, __VA_ARGS__)    \
       PRIVATE_CASE_TYPE(GROUP_INDEX, at::ScalarType::Float, float, __VA_ARGS__)      \
+      default: break;                                                                \
     }                                                                                \
   }()
 

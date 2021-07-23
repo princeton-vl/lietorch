@@ -31,7 +31,6 @@ void exp_backward_kernel(const scalar_t* grad, const scalar_t* a_ptr, scalar_t* 
     // exponential map backward kernel
     using Tangent = Eigen::Matrix<scalar_t,Group::K,1>;
     using Grad = Eigen::Matrix<scalar_t,1,Group::K>;
-    using Data = Eigen::Matrix<scalar_t,Group::N,1>;
 
     at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
         for (int64_t i=start; i<end; i++) {
@@ -46,7 +45,6 @@ template <typename Group, typename scalar_t>
 void log_forward_kernel(const scalar_t* X_ptr, scalar_t* a_ptr, int batch_size) {
     // logarithm map forward kernel
     using Tangent = Eigen::Matrix<scalar_t,Group::K,1>;
-    using Data = Eigen::Matrix<scalar_t,Group::N,1>;
 
     at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
         for (int64_t i=start; i<end; i++) {
@@ -61,7 +59,6 @@ void log_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr, scalar_t* 
     // logarithm map backward kernel
     using Tangent = Eigen::Matrix<scalar_t,Group::K,1>;
     using Grad = Eigen::Matrix<scalar_t,1,Group::K>;
-    using Data = Eigen::Matrix<scalar_t,Group::N,1>;
 
     at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
         for (int64_t i=start; i<end; i++) {
@@ -91,7 +88,6 @@ void inv_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr, scalar_t *
     // group inverse backward kernel
     using Tangent = Eigen::Matrix<scalar_t,Group::K,1>;
     using Grad = Eigen::Matrix<scalar_t,1,Group::K>;
-    using Data = Eigen::Matrix<scalar_t,Group::N,1>;
 
     at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
         for (int64_t i=start; i<end; i++) {
@@ -241,6 +237,38 @@ void act_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr, const scal
     });
 }
 
+
+// template <typename Group, typename scalar_t>
+// void tovec_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr, scalar_t* dX, int batch_size) {
+//     // group inverse forward kernel
+//     using Data = Eigen::Matrix<scalar_t,Group::N,1>;
+//     using Grad = Eigen::Matrix<scalar_t,1,Group::N>;
+
+//     at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
+//         for (int64_t i=start; i<end; i++) {
+//             Group X(X_ptr + i*Group::N);
+//             Grad g(grad + i*Group::N);
+//             Eigen::Map<Grad>(dX + i*Group::N) = g * X.vec_jacobian();
+//         }
+//     });
+// }
+
+// template <typename Group, typename scalar_t>
+// void fromvec_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr, scalar_t* dX, int batch_size) {
+//     // group inverse forward kernel
+//     using Data = Eigen::Matrix<scalar_t,Group::N,1>;
+//     using Grad = Eigen::Matrix<scalar_t,1,Group::N>;
+
+//     at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
+//         for (int64_t i=start; i<end; i++) {
+//             Group X(X_ptr + i*Group::N);
+//             Grad g(grad + i*Group::N);
+//             Eigen::Map<Grad>(dX + i*Group::N) = g * X.vec_jacobian();
+//         }
+//     });
+// }
+
+
 template <typename Group, typename scalar_t>
 void act4_forward_kernel(const scalar_t* X_ptr, const scalar_t* p_ptr, scalar_t* q_ptr, int batch_size) {
     // action on homogeneous point forward kernel
@@ -291,6 +319,18 @@ void as_matrix_forward_kernel(const scalar_t* X_ptr, scalar_t* T_ptr, int batch_
         for (int64_t i=start; i<end; i++) {
             Group X(X_ptr + i*Group::N);
             Eigen::Map<Matrix4>(T_ptr + i*16) = X.Matrix4x4();
+        }
+    });
+}
+
+template <typename Group, typename scalar_t>
+void orthogonal_projector_kernel(const scalar_t* X_ptr, scalar_t* P_ptr, int batch_size) {
+    // group inverse forward kernel
+    using Proj = Eigen::Matrix<scalar_t,Group::N,Group::N,Eigen::RowMajor>;
+    at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
+        for (int64_t i=start; i<end; i++) {
+            Group X(X_ptr + i*Group::N);
+            Eigen::Map<Proj>(P_ptr + i*Group::N*Group::N) = X.orthogonal_projector();
         }
     });
 }
@@ -585,6 +625,21 @@ torch::Tensor as_matrix_forward_cpu(int group_id, torch::Tensor X) {
 
     return T4x4;
 }
+
+
+torch::Tensor orthogonal_projector_cpu(int group_id, torch::Tensor X) {
+    int batch_size = X.size(0);
+    torch::Tensor P;
+    
+    DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.type(), "orthogonal_projector_kernel", ([&] {
+        P = torch::zeros({X.size(0), group_t::N, group_t::N}, X.options());
+        orthogonal_projector_kernel<group_t, scalar_t>(X.data_ptr<scalar_t>(), P.data_ptr<scalar_t>(), batch_size);
+    }));
+
+    return P;
+}
+
+
 
 torch::Tensor jleft_forward_cpu(int group_id, torch::Tensor X, torch::Tensor a) {
     int batch_size = X.size(0);

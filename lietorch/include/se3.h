@@ -111,6 +111,16 @@ class SE3 {
       return ad;
     }
 
+    EIGEN_DEVICE_FUNC Eigen::Matrix<Scalar,7,7> orthogonal_projector() const {
+      // jacobian action on a point
+      Eigen::Matrix<Scalar,7,7> J = Eigen::Matrix<Scalar,7,7>::Zero();
+      J.template block<3,3>(0,0) = Matrix3::Identity();
+      J.template block<3,3>(0,3) = SO3<Scalar>::hat(-translation);
+      J.template block<4,4>(3,3) = so3.orthogonal_projector();
+
+      return J;
+    }
+
     EIGEN_DEVICE_FUNC Tangent Log() const {
       Vector3 phi = so3.Log();      
       Matrix3 Vinv = SO3<Scalar>::left_jacobian_inverse(phi);
@@ -164,7 +174,6 @@ class SE3 {
     
     EIGEN_DEVICE_FUNC static Adjoint left_jacobian(Tangent const& tau_phi) {
       // left jacobian
-      Vector3 tau = tau_phi.template segment<3>(0);
       Vector3 phi = tau_phi.template segment<3>(3);
       Matrix3 J = SO3<Scalar>::left_jacobian(phi);
       Matrix3 Q = SE3<Scalar>::calcQ(tau_phi);
@@ -206,6 +215,9 @@ class SE3 {
       J.template block<3,3>(0,3) = SO3<Scalar>::hat(-p.template segment<3>(0));
       return J;
     }
+
+
+
 
   private:
     SO3<Scalar> so3;

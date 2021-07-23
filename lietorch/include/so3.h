@@ -78,6 +78,18 @@ class SO3 {
       return T;
     }
 
+    EIGEN_DEVICE_FUNC Eigen::Matrix<Scalar,4,4> orthogonal_projector() const {
+      // jacobian action on a point
+      Eigen::Matrix<Scalar,4,4> J = Eigen::Matrix<Scalar,4,4>::Zero();
+      J.template block<3,3>(0,0) = 0.5 * (
+        unit_quaternion.w() * Matrix3::Identity() + 
+        SO3<Scalar>::hat(-unit_quaternion.vec())
+      );
+      
+      J.template block<1,3>(3,0) = 0.5 * (-unit_quaternion.vec());
+      return J;
+    }
+
     EIGEN_DEVICE_FUNC Tangent Adj(Tangent const& a) const {
       return Adj() * a;
     }
@@ -174,7 +186,7 @@ class SO3 {
         Scalar(1.0/6.0) - Scalar(1.0/120.0) * theta2 : 
         (theta - sin(theta)) / (theta2 * theta); 
 
-      return I + coef1 * Phi + coef2 * Phi * Phi;
+      return I + coef1 * Phi + coef2 * Phi2;
     }
 
     EIGEN_DEVICE_FUNC static Adjoint left_jacobian_inverse(Tangent const& phi) {

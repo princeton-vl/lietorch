@@ -215,7 +215,7 @@ __global__ void act_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr,
         Point p(p_ptr + i*3);
         PointGrad dq(grad + i*3);
 
-        Eigen::Map<PointGrad>(dp + i*3) = dq * X.Matrix().block<3,3>(0,0);
+        Eigen::Map<PointGrad>(dp + i*3) = dq * X.Matrix4x4().block<3,3>(0,0);
         Eigen::Map<Grad>(dX + i*Group::N) = dq * Group::act_jacobian(X*p);
     }
 }
@@ -234,7 +234,6 @@ __global__ void act4_forward_kernel(const scalar_t* X_ptr, const scalar_t* p_ptr
         Eigen::Map<Point>(q_ptr + i*4) = X.act4(p);
     }
 }
-
 
 template <typename Group, typename scalar_t>
 __global__ void act4_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr, const scalar_t* p_ptr, scalar_t* dX, scalar_t* dp, int num_threads) {
@@ -256,10 +255,9 @@ __global__ void act4_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr
     }
 }
 
-
 template <typename Group, typename scalar_t>
 __global__ void as_matrix_forward_kernel(const scalar_t* X_ptr, scalar_t* T_ptr, int num_threads) {
-    // group inverse forward kernel
+    // convert to 4x4 matrix representation
     using Tangent = Eigen::Matrix<scalar_t,Group::K,1>;
     using Data = Eigen::Matrix<scalar_t,Group::N,1>;
     using Matrix4 = Eigen::Matrix<scalar_t,4,4,Eigen::RowMajor>;
@@ -267,6 +265,17 @@ __global__ void as_matrix_forward_kernel(const scalar_t* X_ptr, scalar_t* T_ptr,
     GPU_1D_KERNEL_LOOP(i, num_threads) {
         Group X(X_ptr + i*Group::N);
         Eigen::Map<Matrix4>(T_ptr + i*16) = X.Matrix4x4();
+    }
+}
+
+template <typename Group, typename scalar_t>
+__global__ void orthogonal_projector_kernel(const scalar_t* X_ptr, scalar_t* P_ptr, int num_threads) {
+    // orthogonal projection matrix
+    using Proj = Eigen::Matrix<scalar_t,Group::N,Group::N,Eigen::RowMajor>;
+
+    GPU_1D_KERNEL_LOOP(i, num_threads) {
+        Group X(X_ptr + i*Group::N);
+        Eigen::Map<Proj>(P_ptr + i*Group::N*Group::N) = X.orthogonal_projector();
     }
 }
 
@@ -557,6 +566,22 @@ torch::Tensor as_matrix_forward_gpu(int group_id, torch::Tensor X) {
     }));
 
     return T4x4;
+}
+
+
+torch::Tensor orthogonal_projector_gpu(int group_id, torch::Tensor X) {
+    int batch_size = X.size(0);
+    torch::Tensor P;
+
+    DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.type(), "orthogonal_projector_kernel", ([&] {
+        P = torch::zeros({X.size(0), group_t::N, group_t::N}, X.options());
+        orthogonal_projector_kernel<group_t, scalar_t><<<NUM_BLOCKS(batch_size), NUM_THREADS>>>(
+            X.data_ptr<scalar_t>(), 
+            P.data_ptr<scalar_t>(), 
+            batch_size);
+    }));
+
+    return P;
 }
 
 

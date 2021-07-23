@@ -2,6 +2,8 @@ import lietorch_backends
 import torch
 import torch.nn.functional as F
 
+
+
 class GroupOp(torch.autograd.Function):
     """ group operation base class """
 
@@ -22,6 +24,7 @@ class GroupOp(torch.autograd.Function):
         grad_inputs = cls.backward_op(ctx.group_id, grad, *inputs)
         return (None, ) + tuple(grad_inputs)
         
+
 class Exp(GroupOp):
     """ exponential map """
     forward_op, backward_op = lietorch_backends.expm, lietorch_backends.expm_backward
@@ -63,21 +66,37 @@ class ToMatrix(GroupOp):
     forward_op, backward_op = lietorch_backends.as_matrix, None
 
 
-class ExtractTranslation(torch.autograd.Function):
-    """ group operation base class """
 
-    @staticmethod
-    def forward(ctx, data):
-        ctx.save_for_backward(data)
-        return data[...,:3]
 
-    @staticmethod
-    def backward(ctx, dt):
-        data, = ctx.saved_tensors
-        t = data[...,:3]
+### conversion operations to/from Euclidean embeddings ###
 
-        diff_tau_phi = torch.zeros_like(data)
-        diff_tau_phi[...,0:3] = dt
-        diff_tau_phi[...,3:6] = torch.cross(t, dt)
+class FromVec(torch.autograd.Function):
+    """ convert vector into group object """
 
-        return diff_tau_phi
+    @classmethod
+    def forward(cls, ctx, group_id, *inputs):
+        ctx.group_id = group_id
+        ctx.save_for_backward(*inputs)
+        return inputs[0]
+
+    @classmethod
+    def backward(cls, ctx, grad):
+        inputs = ctx.saved_tensors
+        J = lietorch_backends.projector(ctx.group_id, *inputs)
+        return None, torch.matmul(grad.unsqueeze(-2), torch.linalg.pinv(J))
+
+class ToVec(torch.autograd.Function):
+    """ convert group object to vector """
+
+    @classmethod
+    def forward(cls, ctx, group_id, *inputs):
+        ctx.group_id = group_id
+        ctx.save_for_backward(*inputs)
+        return inputs[0]
+
+    @classmethod
+    def backward(cls, ctx, grad):
+        inputs = ctx.saved_tensors
+        J = lietorch_backends.projector(ctx.group_id, *inputs)
+        return None, torch.matmul(grad.unsqueeze(-2), J)
+
