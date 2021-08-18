@@ -1,6 +1,14 @@
 import torch
+
+TORCH_MAJOR = int(torch.__version__.split('.')[0])
+TORCH_MINOR = int(torch.__version__.split('.')[1])
+
 from torch.types import _TensorOrTensors
-from torch._six import container_abcs, istuple
+if TORCH_MAJOR == 1 and TORCH_MINOR < 8:
+    from torch._six import container_abcs, istuple
+else:
+    import collections.abc as container_abcs
+
 import torch.testing
 from torch.overrides import is_tensor_like
 from itertools import product
@@ -203,12 +211,18 @@ def get_analytical_jacobian(input, output, nondet_tol=0.0, grad_out=1.0):
 
 
 def _as_tuple(x):
-    if istuple(x):
+    if TORCH_MAJOR == 1 and TORCH_MINOR < 8:
+        b_tuple = istuple(x)  
+    else:
+        b_tuple = isinstance(x, tuple)
+    
+    if b_tuple:
         return x
     elif isinstance(x, list):
         return tuple(x)
     else:
         return x,
+    
 
 
 def _differentiable_outputs(x):
