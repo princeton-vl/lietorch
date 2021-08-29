@@ -218,7 +218,7 @@ def test_fromvec_grad(Group, device='cuda', tol=1e-6):
         return Group.InitFromVec(a).vec()
 
     D = Group.embedded_dim
-    a = torch.randn(1, D, requires_grad=True, device=device).double()
+    a = torch.randn(1, 2, D, requires_grad=True, device=device).double()
 
     analytical, numerical = gradcheck(fn, [a], eps=1e-4)
 

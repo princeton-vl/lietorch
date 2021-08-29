@@ -83,7 +83,7 @@ class FromVec(torch.autograd.Function):
     def backward(cls, ctx, grad):
         inputs = ctx.saved_tensors
         J = lietorch_backends.projector(ctx.group_id, *inputs)
-        return None, torch.matmul(grad.unsqueeze(-2), torch.linalg.pinv(J))
+        return None, torch.matmul(grad.unsqueeze(-2), torch.linalg.pinv(J)).squeeze(-2)
 
 class ToVec(torch.autograd.Function):
     """ convert group object to vector """
@@ -98,5 +98,5 @@ class ToVec(torch.autograd.Function):
     def backward(cls, ctx, grad):
         inputs = ctx.saved_tensors
         J = lietorch_backends.projector(ctx.group_id, *inputs)
-        return None, torch.matmul(grad.unsqueeze(-2), J)
+        return None, torch.matmul(grad.unsqueeze(-2), J).squeeze(-2)
 

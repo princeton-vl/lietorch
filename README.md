@@ -25,7 +25,7 @@ Zachary Teed and Jia Deng, CVPR 2021
 
 ### Requirements: 
  * Cuda >= 10.1 (with nvcc compiler)
- * PyTorch >= 1.7
+ * PyTorch >= 1.8
 
 We recommend installing within a virtual enviornment. Make sure you clone using the `--recursive` flag. If you are using Anaconda, the following command can be used to install all dependencies
 ```
