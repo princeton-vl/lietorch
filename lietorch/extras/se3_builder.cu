@@ -158,8 +158,8 @@ __global__ void se3_build_forward_kernel(
         Jz[0] = 0.0;
         Jz[1] = 0.0;
         Jz[2] = -d2;
-        Jz[3] = d * Y1;
-        Jz[4] = -d * X1;
+        Jz[3] = -d2 * Y1;
+        Jz[4] = d2 * X1;
         Jz[5] = 0.0;
 
         for (int ii=0; ii<6; ii++) {
@@ -318,8 +318,8 @@ __global__ void se3_build_backward_kernel(
         Jz[0] = 0.0;
         Jz[1] = 0.0;
         Jz[2] = -d2;
-        Jz[3] = d * Y1;
-        Jz[4] = -d * X1;
+        Jz[3] = -d2 * Y1;
+        Jz[4] = d2 * X1;
         Jz[5] = 0.0;
 
         for (int ii=0; ii<6; ii++) {
