@@ -52,8 +52,8 @@ pinhole_jacobians(const float p[3], const float fx, const float fy, float Ju[6],
   Jz[0] = 0.0;
   Jz[1] = 0.0;
   Jz[2] = -d2;
-  Jz[3] = d * Y1;
-  Jz[4] = -d * X1;
+  Jz[3] = -d2 * Y1;
+  Jz[4] = d2 * X1;
   Jz[5] = 0.0;
 }
 
