@@ -23,38 +23,46 @@ Zachary Teed and Jia Deng, CVPR 2021
 ## Installation
 
 
-### Requirements: 
- * Cuda >= 10.1 (with nvcc compiler)
- * PyTorch >= 1.8
+### Installing (from source):
 
-We recommend installing within a virtual enviornment. Make sure you clone using the `--recursive` flag. If you are using Anaconda, the following command can be used to install all dependencies
-```
+Requires torch >= 2 and CUDA >= 11. Tested up to torch==2.7 and CUDA 12. Make sure PyTorch and CUDA major versions match. 
+
+```bash
 git clone --recursive https://github.com/princeton-vl/lietorch.git
 cd lietorch
 
-conda create -n lie_env
-conda activate lie_env
-conda install scipy pyyaml pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
+python3 -m venv .venv
+source .venv/bin/activate
+
+# install requirements
+pip install torch torchvision torchaudio wheel
+
+# optional: specify GPU architectures
+export TORCH_CUDA_ARCH_LIST="7.5;8.6;8.9;9.0"
+
+# install lietorch
+pip install --no-build-isolation .
 ```
 
-To run the examples, you will need OpenCV and Open3D. Depending on your operating system, OpenCV and Open3D can either be installed with pip or may need to be built from source
-```
-pip install opencv-python open3d
-```
-
-### Installing (from source)
-
-Clone the repo using the `--recursive` flag and install using `setup.py` (may take up to 10 minutes)
-```
-git clone --recursive https://github.com/princeton-vl/lietorch.git
-python setup.py install
-./run_tests.sh
-```
-
-### Installing (pip)
-You can install the library directly using pip
+### Installing (with pip)
 ```bash
-pip install git+https://github.com/princeton-vl/lietorch.git
+# optional: specify GPU architectures
+export TORCH_CUDA_ARCH_LIST="7.5;8.6;8.9;9.0"
+
+pip install git+https://github.com/princeton-vl/lietorch.git --no-build-isolation
+```
+
+
+To run the examples, you will need these additional libraries
+```bash
+pip install opencv-python open3d scipy pyyaml
+```
+
+### Running Tests
+
+After building, you can run the tests
+```bash
+./run_tests.sh
 ```
 
 
@@ -77,7 +85,7 @@ Each group supports the following differentiable operations:
 | exp    | g -> G | exponential map |
 | log    | G -> g | logarithm map |
 | inv    | G -> G | group inverse |
-| mul   | G x G -> G | group multiplication |
+| mul    | G x G -> G | group multiplication |
 | adj    | G x g -> g | adjoint |
 | adjT   | G x g*-> g* | dual adjoint |
 | act    | G x R^3 -> R^3 | action on point (set) |

@@ -2,7 +2,7 @@ import torch
 import numpy as np
 
 # group operations implemented in cuda
-from .group_ops import Exp, Log, Inv, Mul, Adj, AdjT, Jinv, Act3, Act4, ToMatrix, ToVec, FromVec
+from .group_ops import Exp, Log, Inv, Mul, Adj, AdjT, Jinv, Act3, Act4, ToVec, FromVec
 from .broadcasting import broadcast_inputs
 
 
@@ -179,9 +179,9 @@ class LieGroup:
 
     def matrix(self):
         """ convert element to 4x4 matrix """
-        I = torch.eye(4, dtype=self.dtype, device=self.device)
-        I = I.view([1] * (len(self.data.shape) - 1) + [4, 4])
-        return self.__class__(self.data[...,None,:]).act(I).transpose(-1,-2)
+        Id = torch.eye(4, dtype=self.dtype, device=self.device)
+        Id = Id.view([1] * (len(self.data.shape) - 1) + [4, 4])
+        return self.__class__(self.data[...,None,:]).act(Id).transpose(-1,-2)
 
     def translation(self):
         """ extract translation component """
@@ -220,12 +220,12 @@ class LieGroup:
     def cuda(self):
         return self.__class__(self.data.cuda())
 
-    def float(self, device):
+    def float(self):
         return self.__class__(self.data.float())
 
-    def double(self, device):
+    def double(self):
         return self.__class__(self.data.double())
-
+    
     def unbind(self, dim=0):
         return [self.__class__(x) for x in self.data.unbind(dim=dim)]
         
