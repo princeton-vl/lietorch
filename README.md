@@ -38,7 +38,6 @@ source .venv/bin/activate
 pip install torch torchvision torchaudio wheel
 
 # optional: specify GPU architectures
-# https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
 export TORCH_CUDA_ARCH_LIST="7.5;8.6;8.9;9.0"
 
 # install lietorch
