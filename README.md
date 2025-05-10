@@ -42,7 +42,7 @@ pip install torch torchvision torchaudio wheel
 export TORCH_CUDA_ARCH_LIST="7.5;8.6;8.9;9.0"
 
 # install lietorch
-pip install -e .
+pip install --no-build-isolation .
 ```
 
 ### Installing (with pip)
@@ -50,7 +50,7 @@ pip install -e .
 # optional: specify GPU architectures
 export TORCH_CUDA_ARCH_LIST="7.5;8.6;8.9;9.0"
 
-pip install git+https://github.com/princeton-vl/lietorch.git
+pip install git+https://github.com/princeton-vl/lietorch.git --no-build-isolation
 ```
 
 
