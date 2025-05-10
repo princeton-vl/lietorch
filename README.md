@@ -49,7 +49,7 @@ pip install --no-build-isolation .
 # optional: specify GPU architectures
 export TORCH_CUDA_ARCH_LIST="7.5;8.6;8.9;9.0"
 
-pip install git+https://github.com/princeton-vl/lietorch.git --no-build-isolation
+pip install --no-build-isolation git+https://github.com/princeton-vl/lietorch.git
 ```
 
 
