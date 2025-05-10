@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools", "torch>=2.6.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lietorch"
+version = "0.2" 
+description = "Lie Groups for PyTorch"
+authors = [
+    { name="teedrz", email="zachteed@gmail.com" }
+]
+version = "0.2"
+description = "Lie Groups for PyTorch"
+license = { text = "BSD-3-Clause" }
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.6.0",
+    "numpy<2",
+]
