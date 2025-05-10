@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta:__legacy__"
 
 [project]
 name = "lietorch"
-version = "0.2" 
+version = "0.3" 
 description = "Lie Groups for PyTorch"
 authors = [
     { name="Zachary Teed", email="zachteed@gmail.com" }
