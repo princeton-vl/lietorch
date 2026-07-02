@@ -215,7 +215,7 @@ __global__ void act_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr,
         Point p(p_ptr + i*3);
         PointGrad dq(grad + i*3);
 
-        Eigen::Map<PointGrad>(dp + i*3) = dq * X.Matrix4x4().block<3,3>(0,0);
+        Eigen::Map<PointGrad>(dp + i*3) = dq * X.Matrix4x4().template block<3,3>(0,0);
         Eigen::Map<Grad>(dX + i*Group::N) = dq * Group::act_jacobian(X*p);
     }
 }
