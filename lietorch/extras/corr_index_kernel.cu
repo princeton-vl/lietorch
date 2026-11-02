@@ -1,9 +1,16 @@
 #include <torch/extension.h>
+#ifdef WITH_ROCM
+#include <hip/hip_runtime.h>
+#else
 #include <cuda.h>
 #include <cuda_runtime.h>
+#endif
 #include <vector>
+#ifdef WITH_ROCM
+#include <hip/hip_fp16.h>
+#else
 #include <cuda_fp16.h>
-#include <cuda_runtime.h>
+#endif
 
 
 #include <ATen/ATen.h>
@@ -132,10 +139,10 @@ std::vector<torch::Tensor> corr_index_cuda_forward(
   const auto ht = volume.size(1);
   const auto wd = volume.size(2);
 
-  const dim3 blocks((wd + BLOCK - 1) / BLOCK, 
-                    (ht + BLOCK - 1) / BLOCK, 
+  const dim3 blocks((wd + BLOCK - 1) / BLOCK,
+                    (ht + BLOCK - 1) / BLOCK,
                     batch_size);
-  
+
   const dim3 threads(BLOCK, BLOCK);
 
   auto opts = volume.options();
@@ -166,8 +173,8 @@ std::vector<torch::Tensor> corr_index_cuda_backward(
 
   auto volume_grad = torch::zeros_like(volume);
 
-  const dim3 blocks((wd + BLOCK - 1) / BLOCK, 
-                    (ht + BLOCK - 1) / BLOCK, 
+  const dim3 blocks((wd + BLOCK - 1) / BLOCK,
+                    (ht + BLOCK - 1) / BLOCK,
                     batch_size);
 
   const dim3 threads(BLOCK, BLOCK);
@@ -183,9 +190,3 @@ std::vector<torch::Tensor> corr_index_cuda_backward(
 
   return {volume_grad};
 }
-
-
-
-
-
-

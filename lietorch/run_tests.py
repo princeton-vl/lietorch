@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import torch
 import lietorch
 
@@ -19,7 +20,7 @@ def test_exp_log(Group, device='cuda'):
     b = Group.exp(a).log()
     assert torch.allclose(a,b,atol=1e-8), "should be identity"
     print("\t-", Group, "Passed exp-log test")
-    
+
 def test_inv(Group, device='cuda'):
     """ check X * X^{-1} == 0 """
     X = Group.exp(.1*torch.randn(2,3,4,5,Group.manifold_dim, device=device).double())
@@ -39,7 +40,7 @@ def test_adj(Group, device='cuda'):
     c = (Y1 * Y2.inv()).log()
     assert torch.allclose(c, torch.zeros_like(c), atol=1e-8), "should be 0"
     print("\t-", Group, "Passed adj test")
-    
+
 
 def test_act(Group, device='cuda'):
     X = Group.exp(torch.randn(1, Group.manifold_dim, device=device).double())
@@ -54,7 +55,7 @@ def test_act(Group, device='cuda'):
 
 ### backward tests ###
 def test_exp_log_grad(Group, device='cuda', tol=1e-8):
-    
+
     D = Group.manifold_dim
 
     def fn(a):
@@ -97,7 +98,7 @@ def test_inv_log_grad(Group, device='cuda', tol=1e-8):
 def test_adj_grad(Group, device='cuda'):
     D = Group.manifold_dim
     X = Group.exp(.5*torch.randn(1,Group.manifold_dim, device=device).double())
-    
+
     def fn(a, b):
         return (Group.exp(a) * X).adj(b)
 
@@ -114,7 +115,7 @@ def test_adj_grad(Group, device='cuda'):
 def test_adjT_grad(Group, device='cuda'):
     D = Group.manifold_dim
     X = Group.exp(.5*torch.randn(1,Group.manifold_dim, device=device).double())
-    
+
     def fn(a, b):
         return (Group.exp(a) * X).adjT(b)
 
@@ -132,7 +133,7 @@ def test_adjT_grad(Group, device='cuda'):
 def test_act_grad(Group, device='cuda'):
     D = Group.manifold_dim
     X = Group.exp(5*torch.randn(1,D, device=device).double())
-    
+
     def fn(a, b):
         return (X*Group.exp(a)).act(b)
 
@@ -150,7 +151,7 @@ def test_act_grad(Group, device='cuda'):
 def test_matrix_grad(Group, device='cuda'):
     D = Group.manifold_dim
     X = Group.exp(torch.randn(1, D, device=device).double())
-    
+
     def fn(a):
         return (Group.exp(a) * X).matrix()
 
@@ -166,7 +167,7 @@ def extract_translation_grad(Group, device='cuda'):
 
     D = Group.manifold_dim
     X = Group.exp(5*torch.randn(1,D, device=device).double())
-    
+
     def fn(a):
         return (Group.exp(a)*X).translation()
 
@@ -182,7 +183,7 @@ def test_vec_grad(Group, device='cuda', tol=1e-6):
 
     D = Group.manifold_dim
     X = Group.exp(5*torch.randn(1,D, device=device).double())
-    
+
     def fn(a):
         return (Group.exp(a)*X).vec()
 
@@ -228,7 +229,7 @@ def test_fromvec_grad(Group, device='cuda', tol=1e-6):
 
 
 def scale(device='cuda'):
-    
+
     def fn(a, s):
         X = SE3.exp(a)
         X.scale(s)
@@ -236,7 +237,7 @@ def scale(device='cuda'):
 
     s = torch.rand(1, requires_grad=True, device=device).double()
     a = torch.randn(1, 6, requires_grad=True, device=device).double()
-    
+
     analytical, numerical = gradcheck(fn, [a, s], eps=1e-3)
     print(analytical[1])
     print(numerical[1])
@@ -247,7 +248,7 @@ def scale(device='cuda'):
 
     print("\t-", "Passed se3-to-sim3 test")
 
-    
+
 if __name__ == '__main__':
 
 
@@ -275,28 +276,27 @@ if __name__ == '__main__':
         test_vec_grad(Group, device='cpu')
         test_fromvec_grad(Group, device='cpu')
 
-    print("Testing lietorch forward pass (GPU) ...")
-    for Group in [SO3, RxSO3, SE3, Sim3]:
-        test_exp_log(Group, device='cuda')
-        test_inv(Group, device='cuda')
-        test_adj(Group, device='cuda')
-        test_act(Group, device='cuda')
+    if torch.cuda.is_available():
+        print("Testing lietorch forward pass (GPU) ...")
+        for Group in [SO3, RxSO3, SE3, Sim3]:
+            test_exp_log(Group, device='cuda')
+            test_inv(Group, device='cuda')
+            test_adj(Group, device='cuda')
+            test_act(Group, device='cuda')
 
-    print("Testing lietorch backward pass (GPU)...")
-    for Group in [SO3, RxSO3, SE3, Sim3]:
-        if Group == Sim3:
-            tol = 1e-3
-        else:
-            tol = 1e-8
+        print("Testing lietorch backward pass (GPU)...")
+        for Group in [SO3, RxSO3, SE3, Sim3]:
+            if Group == Sim3:
+                tol = 1e-3
+            else:
+                tol = 1e-8
 
-        test_exp_log_grad(Group, device='cuda', tol=tol)
-        test_inv_log_grad(Group, device='cuda', tol=tol)
-        test_adj_grad(Group, device='cuda')
-        test_adjT_grad(Group, device='cuda')
-        test_act_grad(Group, device='cuda')
-        test_matrix_grad(Group, device='cuda')
-        extract_translation_grad(Group, device='cuda')
-        test_vec_grad(Group, device='cuda')
-        test_fromvec_grad(Group, device='cuda')
-
-
+            test_exp_log_grad(Group, device='cuda', tol=tol)
+            test_inv_log_grad(Group, device='cuda', tol=tol)
+            test_adj_grad(Group, device='cuda')
+            test_adjT_grad(Group, device='cuda')
+            test_act_grad(Group, device='cuda')
+            test_matrix_grad(Group, device='cuda')
+            extract_translation_grad(Group, device='cuda')
+            test_vec_grad(Group, device='cuda')
+            test_fromvec_grad(Group, device='cuda')

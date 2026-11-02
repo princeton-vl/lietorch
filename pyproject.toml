@@ -1,5 +1,7 @@
 [build-system]
-requires = ["setuptools", "torch", "wheel"]
+# torch is deliberately not listed: it must be the already installed (CUDA/ROCm) build,
+# see setup.py. Build with `pip install --no-build-isolation`.
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta:__legacy__"
 
 [project]
@@ -12,7 +14,7 @@ authors = [
 license = { text = "BSD-3-Clause" }
 readme = "README.md"
 requires-python = ">=3.9"
+# torch is intentionally not a dependency: pip must not replace your CUDA/ROCm build of PyTorch
 dependencies = [
-    "torch",
     "numpy",
 ]

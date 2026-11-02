@@ -46,6 +46,3 @@ torch::Tensor jleft_forward_cpu(int, torch::Tensor, torch::Tensor);
 
 
 #endif
-
-
-  

@@ -17,7 +17,7 @@ void exp_forward_kernel(const scalar_t* a_ptr, scalar_t* X_ptr, int batch_size) 
     // exponential map forward kernel
     using Tangent = Eigen::Matrix<scalar_t,Group::K,1>;
     using Data = Eigen::Matrix<scalar_t,Group::N,1>;
-    
+
     at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
         for (int64_t i=start; i<end; i++) {
             Tangent a(a_ptr + i*Group::K);
@@ -122,7 +122,7 @@ void mul_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr, const scal
     at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
         for (int64_t i=start; i<end; i++) {
             Grad dZ(grad + i*Group::N);
-            Group X(X_ptr + i*Group::N);        
+            Group X(X_ptr + i*Group::N);
             Eigen::Map<Grad>(dX + i*Group::N) = dZ;
             Eigen::Map<Grad>(dY + i*Group::N) = dZ * X.Adj();
         }
@@ -189,7 +189,7 @@ void adjT_backward_kernel(const scalar_t* grad, const scalar_t* X_ptr, const sca
 
     at::parallel_for(0, batch_size, 1, [&](int64_t start, int64_t end) {
         for (int64_t i=start; i<end; i++) {
-            Group X(X_ptr + i*Group::N);        
+            Group X(X_ptr + i*Group::N);
             Tangent db(grad + i*Group::K);
             Grad a(a_ptr + i*Group::K);
 
@@ -360,8 +360,8 @@ torch::Tensor exp_forward_cpu(int group_id, torch::Tensor a) {
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, a.scalar_type(), "exp_forward_kernel", ([&] {
         X = torch::zeros({batch_size, group_t::N}, a.options());
         exp_forward_kernel<group_t, scalar_t>(
-            a.data_ptr<scalar_t>(), 
-            X.data_ptr<scalar_t>(), 
+            a.data_ptr<scalar_t>(),
+            X.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -374,9 +374,9 @@ std::vector<torch::Tensor> exp_backward_cpu(int group_id, torch::Tensor grad, to
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, a.scalar_type(), "exp_backward_kernel", ([&] {
         exp_backward_kernel<group_t, scalar_t>(
-            grad.data_ptr<scalar_t>(), 
-            a.data_ptr<scalar_t>(), 
-            da.data_ptr<scalar_t>(), 
+            grad.data_ptr<scalar_t>(),
+            a.data_ptr<scalar_t>(),
+            da.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -390,8 +390,8 @@ torch::Tensor log_forward_cpu(int group_id, torch::Tensor X) {
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "log_forward_kernel", ([&] {
         a = torch::zeros({batch_size, group_t::K}, X.options());
         log_forward_kernel<group_t, scalar_t>(
-            X.data_ptr<scalar_t>(), 
-            a.data_ptr<scalar_t>(), 
+            X.data_ptr<scalar_t>(),
+            a.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -404,9 +404,9 @@ std::vector<torch::Tensor> log_backward_cpu(int group_id, torch::Tensor grad, to
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "log_backward_kernel", ([&] {
         log_backward_kernel<group_t, scalar_t>(
-            grad.data_ptr<scalar_t>(), 
-            X.data_ptr<scalar_t>(), 
-            dX.data_ptr<scalar_t>(), 
+            grad.data_ptr<scalar_t>(),
+            X.data_ptr<scalar_t>(),
+            dX.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -419,8 +419,8 @@ torch::Tensor inv_forward_cpu(int group_id, torch::Tensor X) {
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "inv_forward_kernel", ([&] {
         inv_forward_kernel<group_t, scalar_t>(
-            X.data_ptr<scalar_t>(), 
-            Y.data_ptr<scalar_t>(), 
+            X.data_ptr<scalar_t>(),
+            Y.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -433,9 +433,9 @@ std::vector<torch::Tensor> inv_backward_cpu(int group_id, torch::Tensor grad, to
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "inv_backward_kernel", ([&] {
         inv_backward_kernel<group_t, scalar_t>(
-            grad.data_ptr<scalar_t>(), 
-            X.data_ptr<scalar_t>(), 
-            dX.data_ptr<scalar_t>(), 
+            grad.data_ptr<scalar_t>(),
+            X.data_ptr<scalar_t>(),
+            dX.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -449,9 +449,9 @@ torch::Tensor mul_forward_cpu(int group_id, torch::Tensor X, torch::Tensor Y) {
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "mul_forward_kernel", ([&] {
         mul_forward_kernel<group_t, scalar_t>(
-            X.data_ptr<scalar_t>(), 
-            Y.data_ptr<scalar_t>(), 
-            Z.data_ptr<scalar_t>(), 
+            X.data_ptr<scalar_t>(),
+            Y.data_ptr<scalar_t>(),
+            Z.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -465,11 +465,11 @@ std::vector<torch::Tensor> mul_backward_cpu(int group_id, torch::Tensor grad, to
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "mul_backward_kernel", ([&] {
         mul_backward_kernel<group_t, scalar_t>(
-            grad.data_ptr<scalar_t>(), 
-            X.data_ptr<scalar_t>(), 
-            Y.data_ptr<scalar_t>(), 
-            dX.data_ptr<scalar_t>(), 
-            dY.data_ptr<scalar_t>(), 
+            grad.data_ptr<scalar_t>(),
+            X.data_ptr<scalar_t>(),
+            Y.data_ptr<scalar_t>(),
+            dX.data_ptr<scalar_t>(),
+            dY.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -482,9 +482,9 @@ torch::Tensor adj_forward_cpu(int group_id, torch::Tensor X, torch::Tensor a) {
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "adj_forward_kernel", ([&] {
         adj_forward_kernel<group_t, scalar_t>(
-            X.data_ptr<scalar_t>(), 
-            a.data_ptr<scalar_t>(), 
-            b.data_ptr<scalar_t>(), 
+            X.data_ptr<scalar_t>(),
+            a.data_ptr<scalar_t>(),
+            b.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -498,11 +498,11 @@ std::vector<torch::Tensor> adj_backward_cpu(int group_id, torch::Tensor grad, to
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "adj_backward_kernel", ([&] {
         adj_backward_kernel<group_t, scalar_t>(
-            grad.data_ptr<scalar_t>(), 
-            X.data_ptr<scalar_t>(), 
-            a.data_ptr<scalar_t>(), 
-            dX.data_ptr<scalar_t>(), 
-            da.data_ptr<scalar_t>(), 
+            grad.data_ptr<scalar_t>(),
+            X.data_ptr<scalar_t>(),
+            a.data_ptr<scalar_t>(),
+            dX.data_ptr<scalar_t>(),
+            da.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -516,9 +516,9 @@ torch::Tensor adjT_forward_cpu(int group_id, torch::Tensor X, torch::Tensor a) {
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "adjT_forward_kernel", ([&] {
         adjT_forward_kernel<group_t, scalar_t>(
-            X.data_ptr<scalar_t>(), 
-            a.data_ptr<scalar_t>(), 
-            b.data_ptr<scalar_t>(), 
+            X.data_ptr<scalar_t>(),
+            a.data_ptr<scalar_t>(),
+            b.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -532,11 +532,11 @@ std::vector<torch::Tensor> adjT_backward_cpu(int group_id, torch::Tensor grad, t
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "adjT_backward_kernel", ([&] {
         adjT_backward_kernel<group_t, scalar_t>(
-            grad.data_ptr<scalar_t>(), 
-            X.data_ptr<scalar_t>(), 
-            a.data_ptr<scalar_t>(), 
-            dX.data_ptr<scalar_t>(), 
-            da.data_ptr<scalar_t>(), 
+            grad.data_ptr<scalar_t>(),
+            X.data_ptr<scalar_t>(),
+            a.data_ptr<scalar_t>(),
+            dX.data_ptr<scalar_t>(),
+            da.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -550,8 +550,8 @@ torch::Tensor act_forward_cpu(int group_id, torch::Tensor X, torch::Tensor p) {
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "act_forward_kernel", ([&] {
         act_forward_kernel<group_t, scalar_t>(
-            X.data_ptr<scalar_t>(), 
-            p.data_ptr<scalar_t>(), 
+            X.data_ptr<scalar_t>(),
+            p.data_ptr<scalar_t>(),
             q.data_ptr<scalar_t>(),
             batch_size);
     }));
@@ -566,11 +566,11 @@ std::vector<torch::Tensor> act_backward_cpu(int group_id, torch::Tensor grad, to
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "act_backward_kernel", ([&] {
         act_backward_kernel<group_t, scalar_t>(
-            grad.data_ptr<scalar_t>(), 
-            X.data_ptr<scalar_t>(), 
-            p.data_ptr<scalar_t>(), 
-            dX.data_ptr<scalar_t>(), 
-            dp.data_ptr<scalar_t>(), 
+            grad.data_ptr<scalar_t>(),
+            X.data_ptr<scalar_t>(),
+            p.data_ptr<scalar_t>(),
+            dX.data_ptr<scalar_t>(),
+            dp.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -584,8 +584,8 @@ torch::Tensor act4_forward_cpu(int group_id, torch::Tensor X, torch::Tensor p) {
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "act4_forward_kernel", ([&] {
         act4_forward_kernel<group_t, scalar_t>(
-            X.data_ptr<scalar_t>(), 
-            p.data_ptr<scalar_t>(), 
+            X.data_ptr<scalar_t>(),
+            p.data_ptr<scalar_t>(),
             q.data_ptr<scalar_t>(),
             batch_size);
     }));
@@ -600,11 +600,11 @@ std::vector<torch::Tensor> act4_backward_cpu(int group_id, torch::Tensor grad, t
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "act4_backward_kernel", ([&] {
         act4_backward_kernel<group_t, scalar_t>(
-            grad.data_ptr<scalar_t>(), 
-            X.data_ptr<scalar_t>(), 
-            p.data_ptr<scalar_t>(), 
-            dX.data_ptr<scalar_t>(), 
-            dp.data_ptr<scalar_t>(), 
+            grad.data_ptr<scalar_t>(),
+            X.data_ptr<scalar_t>(),
+            p.data_ptr<scalar_t>(),
+            dX.data_ptr<scalar_t>(),
+            dp.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -618,8 +618,8 @@ torch::Tensor as_matrix_forward_cpu(int group_id, torch::Tensor X) {
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "as_matrix_forward_kernel", ([&] {
         as_matrix_forward_kernel<group_t, scalar_t>(
-            X.data_ptr<scalar_t>(), 
-            T4x4.data_ptr<scalar_t>(), 
+            X.data_ptr<scalar_t>(),
+            T4x4.data_ptr<scalar_t>(),
             batch_size);
     }));
 
@@ -630,7 +630,7 @@ torch::Tensor as_matrix_forward_cpu(int group_id, torch::Tensor X) {
 torch::Tensor orthogonal_projector_cpu(int group_id, torch::Tensor X) {
     int batch_size = X.size(0);
     torch::Tensor P;
-    
+
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "orthogonal_projector_kernel", ([&] {
         P = torch::zeros({X.size(0), group_t::N, group_t::N}, X.options());
         orthogonal_projector_kernel<group_t, scalar_t>(X.data_ptr<scalar_t>(), P.data_ptr<scalar_t>(), batch_size);
@@ -647,9 +647,9 @@ torch::Tensor jleft_forward_cpu(int group_id, torch::Tensor X, torch::Tensor a) 
 
     DISPATCH_GROUP_AND_FLOATING_TYPES(group_id, X.scalar_type(), "jleft_forward_kernel", ([&] {
         jleft_forward_kernel<group_t, scalar_t>(
-            X.data_ptr<scalar_t>(), 
-            a.data_ptr<scalar_t>(), 
-            b.data_ptr<scalar_t>(), 
+            X.data_ptr<scalar_t>(),
+            a.data_ptr<scalar_t>(),
+            b.data_ptr<scalar_t>(),
             batch_size);
     }));
 

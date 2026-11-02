@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <Eigen/Dense>
-#include <Eigen/Geometry> 
+#include <Eigen/Geometry>
 
 #include "common.h"
 
@@ -29,7 +29,7 @@ class RxSO3 {
     using Adjoint = Eigen::Matrix<Scalar,4,4>;
 
 
-    EIGEN_DEVICE_FUNC RxSO3(Quaternion const& q, Scalar const s) 
+    EIGEN_DEVICE_FUNC RxSO3(Quaternion const& q, Scalar const s)
         : unit_quaternion(q), scale(s) {
       unit_quaternion.normalize();
     };
@@ -87,12 +87,12 @@ class RxSO3 {
     EIGEN_DEVICE_FUNC Eigen::Matrix<Scalar,5,5> orthogonal_projector() const {
       // jacobian action on a point
       Eigen::Matrix<Scalar,5,5> J = Eigen::Matrix<Scalar,5,5>::Zero();
-      
+
       J.template block<3,3>(0,0) = 0.5 * (
-        unit_quaternion.w() * Matrix3::Identity() + 
+        unit_quaternion.w() * Matrix3::Identity() +
         SO3<Scalar>::hat(-unit_quaternion.vec())
       );
-      
+
       J.template block<1,3>(3,0) = 0.5 * (-unit_quaternion.vec());
 
       // scale
@@ -186,14 +186,14 @@ class RxSO3 {
       Quaternion q(real_factor, imag_factor*phi.x(), imag_factor*phi.y(), imag_factor*phi.z());
       return RxSO3<Scalar>(q, scale);
     }
-    
+
     EIGEN_DEVICE_FUNC static Matrix3 calcW(Tangent const& phi_sigma) {
       // left jacobian
       using std::abs;
       Matrix3 const I = Matrix3::Identity();
       Scalar const one(1);
       Scalar const half(0.5);
-      
+
       Vector3 const phi = phi_sigma.template segment<3>(0);
       Scalar const sigma = phi_sigma(3);
       Scalar const theta = phi.norm();
@@ -238,7 +238,7 @@ class RxSO3 {
       Scalar const half(0.5);
       Scalar const one(1);
       Scalar const two(2);
-      
+
       Vector3 const phi = phi_sigma.template segment<3>(0);
       Scalar const sigma = phi_sigma(3);
       Scalar const theta = phi.norm();
@@ -301,7 +301,7 @@ class RxSO3 {
 
     EIGEN_DEVICE_FUNC static Eigen::Matrix<Scalar,3,4> act_jacobian(Point const& p) {
       // jacobian action on a point
-      Eigen::Matrix<Scalar,3,4> Ja; 
+      Eigen::Matrix<Scalar,3,4> Ja;
       Ja << SO3<Scalar>::hat(-p), p;
       return Ja;
     }
@@ -310,7 +310,7 @@ class RxSO3 {
       // jacobian action on a point
       Eigen::Matrix<Scalar,4,4> J = Eigen::Matrix<Scalar,4,4>::Zero();
       J.template block<3,3>(0,0) = SO3<Scalar>::hat(-p.template segment<3>(0));
-      J.template block<3,1>(0,3) = p.template segment<3>(0); 
+      J.template block<3,1>(0,3) = p.template segment<3>(0);
       return J;
     }
 
@@ -320,5 +320,3 @@ class RxSO3 {
 };
 
 #endif
-
-

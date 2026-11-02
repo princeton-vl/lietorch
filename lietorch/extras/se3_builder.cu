@@ -1,6 +1,10 @@
 #include <torch/extension.h>
+#ifdef WITH_ROCM
+#include <hip/hip_runtime.h>
+#else
 #include <cuda.h>
 #include <cuda_runtime.h>
+#endif
 #include <vector>
 #include <iostream>
 
@@ -32,7 +36,7 @@ __global__ void se3_build_forward_kernel(
             Hx:             [B, H, W, 6, 6]
             bx:             [B, H, W, 6, 1]
     */
-    
+
   int batch_id = blockIdx.x; // batch_index
   int tx = threadIdx.x;
   int ix = blockIdx.y * NUM_THREADS + tx; // image_index
@@ -111,7 +115,7 @@ __global__ void se3_build_forward_kernel(
         int w2 = jx % wd;
 
         int r = max(abs(h1-h2), abs(w1-w2));
-        if (r > radius) 
+        if (r > radius)
           continue;
 
         float w = attention[batch_id][h1][w1][h2][w2];
@@ -135,7 +139,7 @@ __global__ void se3_build_forward_kernel(
           continue;
         }
 
-        float d = 1.f/Z1; 
+        float d = 1.f/Z1;
         float d2 = d*d;
 
         // x-jacobians
@@ -248,7 +252,7 @@ __global__ void se3_build_backward_kernel(
   __shared__ float Gs[12][NUM_THREADS];
   __shared__ float H_grad[36][NUM_THREADS];
   __shared__ float b_grad[6][NUM_THREADS];
-  
+
   __syncthreads();
 
   for (int i=0; i<dim; i+=NUM_THREADS) {
@@ -273,7 +277,7 @@ __global__ void se3_build_backward_kernel(
         int w1 = jx % wd;
 
         int r = max(abs(h1-h2), abs(w1-w2));
-        if (r > radius) 
+        if (r > radius)
           continue;
 
         float w = attention[batch_id][h1][w1][h2][w2];
@@ -295,7 +299,7 @@ __global__ void se3_build_backward_kernel(
           continue;
         }
 
-        float d = 1.f/Z1; 
+        float d = 1.f/Z1;
         float d2 = d*d;
 
         // x-jacobians

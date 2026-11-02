@@ -34,7 +34,7 @@ __device__ __forceinline__ void llt(const float A[N][N], float L[N][N])
   }
 }
 
-template <int N> 
+template <int N>
 __device__ __forceinline__ void llt_solve(const float L[N][N], float x[N])
 {
   float s;
@@ -94,7 +94,7 @@ __global__ void cholesky_solve6x6_forward_kernel(
     }
   }
 }
-  
+
 
 __global__ void cholesky_solve6x6_backward_kernel(
     const torch::PackedTensorAccessor32<float,5,torch::RestrictPtrTraits> H_tensor,
@@ -110,7 +110,7 @@ __global__ void cholesky_solve6x6_backward_kernel(
 
   const float* H_ptr = H_tensor[batch_id].data();
   const float* b_ptr = b_tensor[batch_id].data();
-  
+
   const float* dx_ptr = dx_tensor[batch_id].data();
   float* dH_ptr = dH_tensor[batch_id].data();
   float* db_ptr = db_tensor[batch_id].data();

@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include <Eigen/Dense>
-#include <Eigen/Geometry> 
+#include <Eigen/Geometry>
 
 #include "common.h"
 #include "so3.h"
@@ -37,7 +37,7 @@ class Sim3 {
     EIGEN_DEVICE_FUNC Sim3(RxSO3<Scalar> const& rxso3, Vector3 const& t)
       : rxso3(rxso3), translation(t) {};
 
-    EIGEN_DEVICE_FUNC Sim3(const Scalar *data) 
+    EIGEN_DEVICE_FUNC Sim3(const Scalar *data)
       : translation(data), rxso3(data+3)  {};
 
     EIGEN_DEVICE_FUNC Sim3<Scalar> inv() {
@@ -56,7 +56,7 @@ class Sim3 {
     EIGEN_DEVICE_FUNC Point operator*(Point const& p) const {
       return (rxso3 * p) + translation;
     }
-    
+
     EIGEN_DEVICE_FUNC Point4 act4(Point4 const& p) const {
       Point4 p1; p1 << rxso3 * p.template segment<3>(0) + p(3) * translation , p(3);
       return p1;
@@ -115,11 +115,11 @@ class Sim3 {
 
       Matrix3 Phi = SO3<Scalar>::hat(phi);
       Matrix3 I = Matrix3::Identity();
-      
+
       Transformation Omega = Transformation::Zero();
       Omega.template block<3,3>(0,0) = Phi + sigma * I;
       Omega.template block<3,1>(0,3) = tau;
-      
+
       return Omega;
     }
 
@@ -140,14 +140,14 @@ class Sim3 {
 
       return ad;
     }
-    
+
 
     EIGEN_DEVICE_FUNC Tangent Log() const {
       // logarithm map
-      Vector4 phi_sigma = rxso3.Log();      
+      Vector4 phi_sigma = rxso3.Log();
       Matrix3 W = RxSO3<Scalar>::calcW(phi_sigma);
-      
-      Tangent tau_phi_sigma; 
+
+      Tangent tau_phi_sigma;
       tau_phi_sigma << W.inverse() * translation, phi_sigma;
 
       return tau_phi_sigma;
@@ -157,7 +157,7 @@ class Sim3 {
       // exponential map
       Vector3 tau = tau_phi_sigma.template segment<3>(0);
       Vector4 phi_sigma = tau_phi_sigma.template segment<4>(3);
-      
+
       RxSO3<Scalar> rxso3 = RxSO3<Scalar>::Exp(phi_sigma);
       Matrix3 W = RxSO3<Scalar>::calcW(phi_sigma);
 
@@ -170,7 +170,7 @@ class Sim3 {
       Adjoint const Xi2 = Xi * Xi;
       Adjoint const Xi4 = Xi2 * Xi2;
 
-      return Adjoint::Identity() 
+      return Adjoint::Identity()
         + Scalar(1.0/2.0)*Xi
         + Scalar(1.0/6.0)*Xi2
         + Scalar(1.0/24.0)*Xi*Xi2
@@ -184,7 +184,7 @@ class Sim3 {
       Adjoint const Xi2 = Xi * Xi;
       Adjoint const Xi4 = Xi2 * Xi2;
 
-      return Adjoint::Identity() 
+      return Adjoint::Identity()
         - Scalar(1.0/2.0)*Xi
         + Scalar(1.0/12.0)*Xi2
         - Scalar(1.0/720.0)*Xi4;
@@ -214,4 +214,3 @@ class Sim3 {
 };
 
 #endif
-

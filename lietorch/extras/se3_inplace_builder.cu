@@ -1,6 +1,10 @@
 #include <torch/extension.h>
+#ifdef WITH_ROCM
+#include <hip/hip_runtime.h>
+#else
 #include <cuda.h>
 #include <cuda_runtime.h>
+#endif
 #include <vector>
 #include <iostream>
 
@@ -14,8 +18,8 @@ __device__ __forceinline__ float sigmoid(float x) {
 __device__ __forceinline__ void
 se3_transform_point_inplace(const float T[7], float X[3]) {
   const float tx=T[0], ty=T[1], tz=T[2];
-  const float qx=T[3], qy=T[4], qz=T[5], qw=T[6];  
-  
+  const float qx=T[3], qy=T[4], qz=T[5], qw=T[6];
+
   float uv[3];
   uv[0] = 2.0 * (qy*X[2] - qz*X[1]);
   uv[1] = 2.0 * (qz*X[0] - qx*X[2]);
@@ -29,7 +33,7 @@ se3_transform_point_inplace(const float T[7], float X[3]) {
 __device__ __forceinline__ void
 pinhole_jacobians(const float p[3], const float fx, const float fy, float Ju[6], float Jv[6], float Jz[6]) {
   const float X1=p[0], Y1=p[1], Z1=p[2];
-  const float d = 1.0 / Z1; 
+  const float d = 1.0 / Z1;
   const float d2 = d * d;
 
   // x-jacobians
@@ -164,13 +168,13 @@ __global__ void dense_se3_forward_kernel(
         int h2 = jx / wd;
         int w2 = jx % wd;
 
-        int r = max(abs(h1-h2), abs(w1-w2));        
-        if (r > radius) 
+        int r = max(abs(h1-h2), abs(w1-w2));
+        if (r > radius)
           continue;
 
-        float p[3] = { X0[0][j], X0[1][j], X0[2][j] };        
+        float p[3] = { X0[0][j], X0[1][j], X0[2][j] };
         se3_transform_point_inplace(G, p);
-        
+
         // residual vectors
         const float X1=p[0], Y1=p[1], Z1=p[2];
 
@@ -182,14 +186,14 @@ __global__ void dense_se3_forward_kernel(
         const float rz = rvec[2][j] - 1.0 / Z1;
 
         // exclude pixels too close or errors too big
-        if (Z1 < 0.1 || abs(ru) > 128 || abs(rv) > 128) 
+        if (Z1 < 0.1 || abs(ru) > 128 || abs(rv) > 128)
           continue;
-      
+
         float s=0.0;
         for (int k=0; k<ae_dim; k++) {
           s += (ae1[k] - ae2[k][j]) * (ae1[k] - ae2[k][j]);
         }
-        
+
         const float w = sigmoid(-s);
         const float wu = w * wvec[0][j];
         const float wv = w * wvec[1][j];
@@ -286,7 +290,7 @@ __global__ void dense_se3_backward_kernel1(
     wu = weights[batch_id][0][h2][w2];
     wv = weights[batch_id][1][h2][w2];
     wz = weights[batch_id][2][h2][w2];
-    
+
     for (int ii=0; ii<ae_dim; ii++) {
       ae2[ii] = ae_data[ix + ii*dim];
       diff_ae2[ii] = 0;
@@ -306,7 +310,7 @@ __global__ void dense_se3_backward_kernel1(
   __shared__ float dH[6][6][NUM_THREADS];
   __shared__ float db[6][NUM_THREADS];
   __shared__ float ae1[AE_DIM][NUM_THREADS];
-  
+
   __syncthreads();
 
   for (int i=0; i<dim; i+=NUM_THREADS) {
@@ -347,10 +351,10 @@ __global__ void dense_se3_backward_kernel1(
 
         int r = max(abs(h1-h2), abs(w1-w2));
         if (r > radius) continue;
-  
+
         float p[3] = { X0[0], X0[1], X0[2] };
         se3_transform_point_inplace(&Gs[j][0], p);
-        
+
         // residual vectors
         const float X1=p[0], Y1=p[1], Z1=p[2];
         const float u = fx * (X1 / Z1) + cx;
@@ -363,12 +367,12 @@ __global__ void dense_se3_backward_kernel1(
         for (int k=0; k<ae_dim; k++) {
           s += (ae1[k][j] - ae2[k]) * (ae1[k][j] - ae2[k]);
         }
-        
+
         float diff_w = 0.0f;
         const float w = sigmoid(-s);
 
         // exclude pixels too close or errors too big
-        if (Z1 < 0.1 || abs(ru) > 128 || abs(rv) > 128) 
+        if (Z1 < 0.1 || abs(ru) > 128 || abs(rv) > 128)
           continue;
 
         pinhole_jacobians(p, fx, fy, Ju, Jv, Jz);
@@ -481,7 +485,7 @@ __global__ void dense_se3_backward_kernel2(
       ae1[ii] = embeddings[batch_id][ii][h1][w1];
       diff_ae1[ii] = 0;
     }
-    
+
     for (int ii=0; ii<6; ii++) {
       db[ii] = bx_grad[batch_id][ii][0][h1][w1];
     }
@@ -532,17 +536,17 @@ __global__ void dense_se3_backward_kernel2(
         int h2 = jx / wd;
         int w2 = jx % wd;
 
-        int r = max(abs(h1-h2), abs(w1-w2));        
+        int r = max(abs(h1-h2), abs(w1-w2));
         if (r > radius) continue;
 
-        float p[3] = { X0[0][j], X0[1][j], X0[2][j] };        
+        float p[3] = { X0[0][j], X0[1][j], X0[2][j] };
         se3_transform_point_inplace(G, p);
-        
+
         // residual vectors
         const float X1=p[0], Y1=p[1], Z1=p[2];
         const float u = fx * (X1 / Z1) + cx;
         const float v = fy * (Y1 / Z1) + cy;
-        
+
         const float ru = rvec[0][j] - u;
         const float rv = rvec[1][j] - v;
         const float rz = rvec[2][j] - 1.0 / Z1;
@@ -551,7 +555,7 @@ __global__ void dense_se3_backward_kernel2(
         for (int k=0; k<ae_dim; k++) {
           s += (ae1[k] - ae2[k][j]) * (ae1[k] - ae2[k][j]);
         }
-        
+
         const float w = sigmoid(-s);
         float diff_w = 0;
 
@@ -560,7 +564,7 @@ __global__ void dense_se3_backward_kernel2(
         const float wz = wvec[2][j];
 
         // exclude pixels too close or errors too big
-        if (Z1 < 0.1 || abs(ru) > 128 || abs(rv) > 128) 
+        if (Z1 < 0.1 || abs(ru) > 128 || abs(rv) > 128)
           continue;
 
         pinhole_jacobians(p, fx, fy, Ju, Jv, Jz);

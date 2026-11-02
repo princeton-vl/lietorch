@@ -149,7 +149,7 @@ std::vector<torch::Tensor> se3_build(
   CHECK_INPUT(weights);
   CHECK_INPUT(intrinsics);
 
-  return se3_build_cuda(attention, transforms, 
+  return se3_build_cuda(attention, transforms,
     points, targets, weights, intrinsics, radius);
 }
 
@@ -174,7 +174,7 @@ std::vector<torch::Tensor> se3_build_backward(
   CHECK_INPUT(H_grad);
   CHECK_INPUT(b_grad);
 
-  return se3_build_backward_cuda(attention, transforms, points, 
+  return se3_build_backward_cuda(attention, transforms, points,
     targets, weights, intrinsics, H_grad, b_grad, radius);
 }
 
@@ -194,7 +194,7 @@ std::vector<torch::Tensor> se3_build_inplace(
   CHECK_INPUT(weights);
   CHECK_INPUT(intrinsics);
 
-  return dense_se3_forward_cuda(transforms, embeddings, 
+  return dense_se3_forward_cuda(transforms, embeddings,
     points, targets, weights, intrinsics, radius);
 }
 
@@ -219,7 +219,7 @@ std::vector<torch::Tensor> se3_build_inplace_backward(
   CHECK_INPUT(H_grad);
   CHECK_INPUT(b_grad);
 
-  return dense_se3_backward_cuda(transforms, embeddings, points, 
+  return dense_se3_backward_cuda(transforms, embeddings, points,
     targets, weights, intrinsics, H_grad, b_grad, radius);
 }
 
@@ -229,7 +229,7 @@ std::vector<torch::Tensor> cholesky6x6_forward(
     torch::Tensor b) {
   CHECK_INPUT(H);
   CHECK_INPUT(b);
-  
+
   return cholesky_solve6x6_forward_cuda(H, b);
 }
 
@@ -254,11 +254,10 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   // RAFT-3D functions
   m.def("se3_build", &se3_build, "build forward");
   m.def("se3_build_backward", &se3_build_backward, "build backward");
-  
+
   m.def("se3_build_inplace", &se3_build_inplace, "build forward");
   m.def("se3_build_inplace_backward", &se3_build_inplace_backward, "build backward");
 
   m.def("cholesky6x6_forward", &cholesky6x6_forward, "solve forward");
   m.def("cholesky6x6_backward", &cholesky6x6_backward, "solve backward");
 }
-

@@ -23,7 +23,7 @@ class GroupOp(torch.autograd.Function):
         grad = grad.contiguous()
         grad_inputs = cls.backward_op(ctx.group_id, grad, *inputs)
         return (None, ) + tuple(grad_inputs)
-        
+
 
 class Exp(GroupOp):
     """ exponential map """
@@ -99,4 +99,3 @@ class ToVec(torch.autograd.Function):
         inputs = ctx.saved_tensors
         J = lietorch_backends.projector(ctx.group_id, *inputs)
         return None, torch.matmul(grad.unsqueeze(-2), J).squeeze(-2)
-

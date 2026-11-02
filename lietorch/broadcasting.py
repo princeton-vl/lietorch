@@ -9,12 +9,12 @@ def check_broadcastable(x, y):
 def broadcast_inputs(x, y):
     """ Automatic broadcasting of missing dimensions """
     if y is None:
-        xs, xd = x.shape[:-1], x.shape[-1] 
+        xs, xd = x.shape[:-1], x.shape[-1]
         return (x.view(-1, xd).contiguous(), ), x.shape[:-1]
 
     check_broadcastable(x, y)
 
-    xs, xd = x.shape[:-1], x.shape[-1] 
+    xs, xd = x.shape[:-1], x.shape[-1]
     ys, yd = y.shape[:-1], y.shape[-1]
     out_shape = [max(n,m) for (n,m) in zip(xs,ys)]
 

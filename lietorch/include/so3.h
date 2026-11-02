@@ -2,10 +2,14 @@
 #ifndef SO3_HEADER
 #define SO3_HEADER
 
+#ifdef WITH_ROCM
+#include <hip/hip_runtime.h>
+#elif defined(WITH_CUDA)
 #include <cuda.h>
+#endif
 #include <stdio.h>
 #include <Eigen/Dense>
-#include <Eigen/Geometry> 
+#include <Eigen/Geometry>
 
 #include "common.h"
 
@@ -63,7 +67,7 @@ class SO3 {
       Point4 p1; p1 << this->operator*(p.template segment<3>(0)), p(3);
       return p1;
     }
-    
+
     EIGEN_DEVICE_FUNC Adjoint Adj() const {
       return unit_quaternion.toRotationMatrix();
     }
@@ -82,10 +86,10 @@ class SO3 {
       // jacobian action on a point
       Eigen::Matrix<Scalar,4,4> J = Eigen::Matrix<Scalar,4,4>::Zero();
       J.template block<3,3>(0,0) = 0.5 * (
-        unit_quaternion.w() * Matrix3::Identity() + 
+        unit_quaternion.w() * Matrix3::Identity() +
         SO3<Scalar>::hat(-unit_quaternion.vec())
       );
-      
+
       J.template block<1,3>(3,0) = 0.5 * (-unit_quaternion.vec());
       return J;
     }
@@ -100,9 +104,9 @@ class SO3 {
 
     EIGEN_DEVICE_FUNC static Transformation hat(Tangent const& phi) {
       Transformation Phi;
-      Phi << 
-        0.0, -phi(2), phi(1), 
-        phi(2), 0.0, -phi(0), 
+      Phi <<
+        0.0, -phi(2), phi(1),
+        phi(2), 0.0, -phi(0),
         -phi(1), phi(0), 0.0;
 
       return Phi;
@@ -168,7 +172,7 @@ class SO3 {
       Quaternion q(real_factor, imag_factor*phi.x(), imag_factor*phi.y(), imag_factor*phi.z());
       return SO3<Scalar>(q);
     }
-    
+
     EIGEN_DEVICE_FUNC static Adjoint left_jacobian(Tangent const& phi) {
       // left jacobian
       Matrix3 I = Matrix3::Identity();
@@ -178,13 +182,13 @@ class SO3 {
       Scalar theta2 = phi.squaredNorm();
       Scalar theta = sqrt(theta2);
 
-      Scalar coef1 = (theta < EPS) ? 
-        Scalar(1.0/2.0) - Scalar(1.0/24.0) * theta2 : 
+      Scalar coef1 = (theta < EPS) ?
+        Scalar(1.0/2.0) - Scalar(1.0/24.0) * theta2 :
         (1.0 - cos(theta)) / theta2;
-      
-      Scalar coef2 = (theta < EPS) ? 
-        Scalar(1.0/6.0) - Scalar(1.0/120.0) * theta2 : 
-        (theta - sin(theta)) / (theta2 * theta); 
+
+      Scalar coef2 = (theta < EPS) ?
+        Scalar(1.0/6.0) - Scalar(1.0/120.0) * theta2 :
+        (theta - sin(theta)) / (theta2 * theta);
 
       return I + coef1 * Phi + coef2 * Phi2;
     }
@@ -199,7 +203,7 @@ class SO3 {
       Scalar theta = sqrt(theta2);
       Scalar half_theta = Scalar(.5) * theta ;
 
-      Scalar coef2 = (theta < EPS) ? Scalar(1.0/12.0) : 
+      Scalar coef2 = (theta < EPS) ? Scalar(1.0/12.0) :
            (Scalar(1) -
             theta * cos(half_theta) / (Scalar(2) * sin(half_theta))) /
                (theta * theta);
@@ -225,5 +229,3 @@ class SO3 {
 };
 
 #endif
-
-

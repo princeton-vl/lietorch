@@ -25,7 +25,7 @@ Zachary Teed and Jia Deng, CVPR 2021
 
 ### Installing (from source):
 
-Requires torch >= 2 and CUDA >= 11. Tested up to torch==2.7 and CUDA 12. Make sure PyTorch and CUDA major versions match. 
+Requires torch >= 2 and CUDA >= 11 (tested up to torch==2.7 and CUDA 12) or ROCm (HIP). Make sure PyTorch and CUDA/ROCm major versions match. The backend (CUDA, ROCm or CPU-only) is selected automatically from the installed PyTorch build and toolkit (`nvcc`/`hipcc`); set `LIETORCH_FORCE_CPU=1` to force a CPU-only build. For ROCm, install a ROCm build of PyTorch and optionally set `PYTORCH_ROCM_ARCH` (e.g. `gfx90a;gfx1100`) instead of `TORCH_CUDA_ARCH_LIST`. The CUDA kernels are hipified automatically by PyTorch during the build. Pip-installed ROCm SDKs additionally need the development files (thrust headers) matching your torch: `pip install "rocm[devel]==<version>" --index-url <same index as torch>`. `setup.py` locates them and works around the missing unversioned `libamdhip64.so` itself. Always build with `--no-build-isolation` so the build uses your installed (ROCm/CUDA) PyTorch instead of a generic one from PyPI, e.g. `pip install --no-build-isolation git+https://github.com/princeton-vl/lietorch.git` (pip fetches the Eigen submodule automatically).
 
 ```bash
 git clone --recursive https://github.com/princeton-vl/lietorch.git

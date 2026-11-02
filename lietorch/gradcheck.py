@@ -212,17 +212,17 @@ def get_analytical_jacobian(input, output, nondet_tol=0.0, grad_out=1.0):
 
 def _as_tuple(x):
     if TORCH_MAJOR == 1 and TORCH_MINOR < 8:
-        b_tuple = istuple(x)  
+        b_tuple = istuple(x)
     else:
         b_tuple = isinstance(x, tuple)
-    
+
     if b_tuple:
         return x
     elif isinstance(x, list):
         return tuple(x)
     else:
         return x,
-    
+
 
 
 def _differentiable_outputs(x):

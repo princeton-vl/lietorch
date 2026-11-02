@@ -13,9 +13,9 @@ class LieGroupParameter(torch.Tensor):
     __torch_function__ = _disabled_torch_function_impl
 
     def __new__(cls, group, requires_grad=True):
-        data = torch.zeros(group.tangent_shape, 
-                           device=group.data.device, 
-                           dtype=group.data.dtype, 
+        data = torch.zeros(group.tangent_shape,
+                           device=group.data.device,
+                           dtype=group.data.dtype,
                            requires_grad=True)
 
         return torch.Tensor._make_subclass(cls, data, requires_grad)
@@ -80,10 +80,10 @@ class LieGroup:
     @classmethod
     def Identity(cls, *batch_shape, **kwargs):
         """ Construct identity element with batch shape """
-        
+
         if isinstance(batch_shape[0], tuple):
             batch_shape = batch_shape[0]
-        
+
         elif isinstance(batch_shape[0], list):
             batch_shape = tuple(batch_shape[0])
 
@@ -113,10 +113,10 @@ class LieGroup:
 
         if isinstance(batch_shape[0], tuple):
             batch_shape = batch_shape[0]
-        
+
         elif isinstance(batch_shape[0], list):
             batch_shape = tuple(batch_shape[0])
-        
+
         tangent_shape = batch_shape + (cls.manifold_dim,)
         xi = torch.randn(tangent_shape, **kwargs)
         return cls.exp(sigma * xi)
@@ -168,11 +168,11 @@ class LieGroup:
 
     def act(self, p):
         """ action on a point cloud """
-        
+
         # action on point
         if p.shape[-1] == 3:
             return self.apply_op(Act3, self.data, p)
-        
+
         # action on homogeneous point
         elif p.shape[-1] == 4:
             return self.apply_op(Act4, self.data, p)
@@ -225,17 +225,17 @@ class LieGroup:
 
     def double(self):
         return self.__class__(self.data.double())
-    
+
     def unbind(self, dim=0):
         return [self.__class__(x) for x in self.data.unbind(dim=dim)]
-        
+
 
 class SO3(LieGroup):
     group_name = 'SO3'
     group_id = 1
     manifold_dim = 3
     embedded_dim = 4
-    
+
     # unit quaternion
     id_elem = torch.as_tensor([0.0, 0.0, 0.0, 1.0])
 
@@ -251,7 +251,7 @@ class RxSO3(LieGroup):
     group_id = 2
     manifold_dim = 4
     embedded_dim = 5
-    
+
     # unit quaternion
     id_elem = torch.as_tensor([0.0, 0.0, 0.0, 1.0, 1.0])
 

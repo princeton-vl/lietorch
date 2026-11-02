@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <Eigen/Dense>
-#include <Eigen/Geometry> 
+#include <Eigen/Geometry>
 
 #include "common.h"
 #include "so3.h"
@@ -93,7 +93,7 @@ class SE3 {
       Transformation TauPhi = Transformation::Zero();
       TauPhi.template block<3,3>(0,0) = SO3<Scalar>::hat(phi);
       TauPhi.template block<3,1>(0,3) = tau;
-      
+
       return TauPhi;
     }
 
@@ -122,10 +122,10 @@ class SE3 {
     }
 
     EIGEN_DEVICE_FUNC Tangent Log() const {
-      Vector3 phi = so3.Log();      
+      Vector3 phi = so3.Log();
       Matrix3 Vinv = SO3<Scalar>::left_jacobian_inverse(phi);
 
-      Tangent tau_phi; 
+      Tangent tau_phi;
       tau_phi << Vinv * translation, phi;
 
       return tau_phi;
@@ -153,25 +153,25 @@ class SE3 {
       Scalar theta_pow4 = theta_pow2 * theta_pow2;
 
       Scalar coef1 = (theta < EPS) ?
-        Scalar(1.0/6.0) - Scalar(1.0/120.0) * theta_pow2 : 
+        Scalar(1.0/6.0) - Scalar(1.0/120.0) * theta_pow2 :
         (theta - sin(theta)) / (theta_pow2 * theta);
 
       Scalar coef2 = (theta < EPS) ?
-        Scalar(1.0/24.0) - Scalar(1.0/720.0) * theta_pow2 : 
+        Scalar(1.0/24.0) - Scalar(1.0/720.0) * theta_pow2 :
         (theta_pow2 + 2*cos(theta) - 2) / (2 * theta_pow4);
 
       Scalar coef3 = (theta < EPS) ?
-        Scalar(1.0/120.0) - Scalar(1.0/2520.0) * theta_pow2 : 
+        Scalar(1.0/120.0) - Scalar(1.0/2520.0) * theta_pow2 :
         (2*theta - 3*sin(theta) + theta*cos(theta)) / (2 * theta_pow4 * theta);
 
-      Matrix3 Q = Scalar(0.5) * Tau + 
+      Matrix3 Q = Scalar(0.5) * Tau +
         coef1 * (Phi*Tau + Tau*Phi + Phi*Tau*Phi) +
-        coef2 * (Phi*Phi*Tau + Tau*Phi*Phi - 3*Phi*Tau*Phi) + 
+        coef2 * (Phi*Phi*Tau + Tau*Phi*Phi - 3*Phi*Tau*Phi) +
         coef3 * (Phi*Tau*Phi*Phi + Phi*Phi*Tau*Phi);
 
       return Q;
     }
-    
+
     EIGEN_DEVICE_FUNC static Adjoint left_jacobian(Tangent const& tau_phi) {
       // left jacobian
       Vector3 phi = tau_phi.template segment<3>(3);
@@ -226,4 +226,3 @@ class SE3 {
 };
 
 #endif
-
