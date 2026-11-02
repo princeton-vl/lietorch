@@ -46,6 +46,7 @@ ROCM_INDEX_URLS = [
     "https://repo.amd.com/rocm/whl/gfx120X-all/",
     "https://rocm.prereleases.amd.com/whl/gfx120X-all/",
     "https://rocm.nightlies.amd.com/v2/gfx120X-all/",
+    "https://stable.repo.amd.com/rocm/whl-next/",
 ]
 
 
@@ -66,7 +67,7 @@ def fetch_rocm_headers():
     except metadata.PackageNotFoundError:
         version = torch.version.hip.split("-")[0]
     major, minor = version.split(".")[:2]
-    spec = f">={major}.{minor}.0a0,<{major}.{int(minor) + 1}.0a0"
+    spec = f">={major}.{minor}"
     indexes = [u for u in [os.environ.get("LIETORCH_ROCM_INDEX_URL")] if u] or ROCM_INDEX_URLS
 
     with tempfile.TemporaryDirectory() as tmp:
