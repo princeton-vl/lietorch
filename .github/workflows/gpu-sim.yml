@@ -1,0 +1,76 @@
+name: GPU tests (simulated H100)
+
+# The hosted runners have no GPU, so the CUDA half of run_tests.py never runs
+# there. This builds the extensions for CUDA 13.0 and runs run_tests.py on a
+# simulated NVIDIA H100 (https://github.com/pantheongpu/pantheonsim). A
+# simulator cannot reproduce hardware-specific behavior or timing, so it
+# complements real-GPU testing and does not replace it.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "lietorch/**"
+      - "setup.py"
+      - "pyproject.toml"
+      - ".github/workflows/gpu-sim.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gpu-sim:
+    name: run_tests.py (CUDA 13.0, simulated H100)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Set up the simulated H100 and CUDA toolkit
+        uses: pantheongpu/setup-pantheonsim@a1b9d4237411f9b2b0e0bb895b4d83377f336a7b # v0.1.9
+        with:
+          gpu: nvidia/h100
+          cuda-toolkit: "13.0"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install torch (CUDA 13.0 wheel)
+        run: |
+          python -m venv "$RUNNER_TEMP/venv"
+          source "$RUNNER_TEMP/venv/bin/activate"
+          pip install torch --index-url https://download.pytorch.org/whl/cu130
+          pip install numpy setuptools wheel
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+
+      # 9.0+PTX makes torch pass -gencode for compute_90 (PTX), which the
+      # simulator runs. CUDA_HOME points the build at the real toolkit (the
+      # action's nvcc drop-in has no headers next to it). MAX_JOBS limits the
+      # parallel nvcc/g++ processes.
+      - name: Build the extensions
+        env:
+          CUDA_HOME: /usr/local/cuda-13.0
+          TORCH_CUDA_ARCH_LIST: "9.0+PTX"
+          MAX_JOBS: "3"
+        run: pip install --no-build-isolation .
+
+      # Run from outside the checkout so that the installed package is
+      # imported, not the source tree. --preload makes the simulator's CUDA
+      # libraries win over the ones inside the torch wheel.
+      - name: Run run_tests.py on the simulated H100
+        run: |
+          mkdir "$RUNNER_TEMP/run"
+          cp lietorch/run_tests.py lietorch/gradcheck.py "$RUNNER_TEMP/run/"
+          cd "$RUNNER_TEMP/run"
+          vgpu run --preload --gpu nvidia/h100 python -c \
+            "import torch; assert torch.cuda.is_available(); print(torch.cuda.get_device_name(0))"
+          vgpu run --preload --gpu nvidia/h100 python run_tests.py
